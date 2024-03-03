@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Box</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #222;
+            color: #fff;
+        }
+        #chat-container {
+            width: 400px;
+            margin: 20px auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        #chat-messages {
+            height: 300px;
+            overflow-y: scroll;
+            background: linear-gradient(to bottom, #333, #222);
+            padding: 10px;
+        }
+        #chat-input {
+            width: calc(100% - 50px);
+            padding: 10px;
+            border: none;
+            border-top: 1px solid #ccc;
+            background: #333;
+            color: #fff;
+            box-sizing: border-box;
+        }
+        #alias-input {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background: #333;
+            color: #fff;
+            box-sizing: border-box;
+        }
+        #send-button {
+            /* width: 50px;
+            padding: 10px; */
+            background: #4CAF50;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-messages"></div>
+        <input type="text" id="alias-input" placeholder="Enter your alias">
+        <input type="text" id="chat-input" placeholder="Type your message">
+        <button id="send-button">Send</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
+    <script>
+        var socket = io();
+
+        var aliasInput = document.getElementById('alias-input');
+        var chatInput = document.getElementById('chat-input');
+        var chatMessages = document.getElementById('chat-messages');
+        var sendButton = document.getElementById('send-button');
+
+        var alias = '';
+
+        aliasInput.addEventListener('change', function () {
+            alias = this.value;
+            socket.emit('check_alias', {'alias': alias});
+        });
+
+        chatInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        sendButton.addEventListener('click', function () {
+            sendMessage();
+        });
+
+        socket.on('message', function (msg) {
+            var messageElement = document.createElement('div');
+            messageElement.textContent = msg;
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+
+        socket.on('alias_taken', function (data) {
+            alert(data.message); // You can replace this with a modal
+            aliasInput.value = ''; // Clear the alias input
+        });
+
+        socket.on('alias_available', function (data) {
+            console.log(data.message);
+        });
+
+        function sendMessage() {
+            var message = chatInput.value.trim();
+            if (message !== '') {
+                socket.send(alias + ': ' + message);
+                chatInput.value = '';
+            }
+        }
+    </script>
+</body>
+</html>
